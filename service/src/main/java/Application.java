@@ -1,0 +1,142 @@
+
+import model.BatchTransfer;
+import model.ScannedDocumentTransfer;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Map;
+
+public class Application {
+
+    private static final String jdbcDriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+
+    //The JDBC connection URL which allows for Windows authentication is defined below.
+    private static final String jdbcURL = "jdbc:sqlserver://sacsqldev14.cm.fdielt.com:1433;databaseName=SquashQA;integratedSecurity=true";
+
+    public static void main(String[] args) throws SQLException {
+        System.out.println("Program started");
+        try
+        {
+            Class.forName(jdbcDriver).newInstance();
+            System.out.println("JDBC driver loaded");
+        }
+        catch (Exception err)
+        {
+            System.err.println("Error loading JDBC driver");
+            err.printStackTrace(System.err);
+            System.exit(0);
+        }
+
+        Connection databaseConnection= null;
+        try
+        {
+            //Connect to the database
+            databaseConnection = DriverManager.getConnection(jdbcURL);
+            System.out.println("Connected to the database");
+        }
+        catch (SQLException err)
+        {
+            System.err.println("Error connecting to the database");
+            err.printStackTrace(System.err);
+            System.exit(0);
+        }
+        try
+        {
+            //declare the statement object
+            Statement sqlStatement = databaseConnection.createStatement();
+
+            execCommand(1, sqlStatement);
+
+            System.out.println("Closing database connection");
+
+            //close the database connection
+            databaseConnection.close();
+        }
+        catch (SQLException err)
+        {
+            System.err.println("SQL Error");
+            err.printStackTrace(System.err);
+            System.exit(0);
+        }
+        System.out.println("Program finished");
+    }
+
+    private static void execCommand(int count, Statement sqlStatement) throws SQLException {
+        if (count > 0 && count < 100 && sqlStatement != null) {
+            System.out.println("************************************");
+            System.out.println(" Batch Number  | Manufacturer Id");
+            Map<BatchTransfer, ScannedDocumentTransfer> values = DataGenerator.getData(count);
+            for (BatchTransfer batchTransfer: values.keySet()) {
+                ScannedDocumentTransfer documentTransfer = values.get(batchTransfer);
+                //execute the command using the execute method
+                sqlStatement.execute(prepareBatchTransferCmd(batchTransfer));
+                sqlStatement.execute(prepareScannedDocumentTransferCmd(documentTransfer));
+                System.out.println(" " + batchTransfer.getBatchNumber() + "  | " + documentTransfer.getManufacturerId());
+            }
+            System.out.println("************************************");
+        }
+    }
+    private static String prepareBatchTransferCmd(BatchTransfer batchTransfer) {
+        StringBuilder output = new StringBuilder();
+        if (batchTransfer != null && batchTransfer.getBatchNumber() != null) {
+            output.append("INSERT INTO [dbo].[BATCH_TRANSFER] (BATCH_NUMBER, CLIENT_SHORT_NAME," +
+                    "STATE, LEGACY_STATUS, CREATED_DATE_TIME, TRACKING_ID," +
+                    "LAST_MOD_DATE_TIME, BATCH_CONTROL_NUMBER, COMMIT_USERNAME, BATCH_RECEIVE_DATE," +
+                    "LEGACY_DOCUMENT_TYPE, DOCUMENT_TYPE_IDENTIFIER, TOTAL_SCANNED_COUNT," +
+                    "IS_ORIGINAL, LOCATION_ID) values ('");
+            output.append(batchTransfer.getBatchNumber()).append("', '");
+            output.append(batchTransfer.getClientShortName()).append("', '");
+            output.append(batchTransfer.getState()).append("', '");
+            output.append(batchTransfer.getLegacyStatus()).append("', '");
+            output.append(batchTransfer.getCreatedDateTime()).append("', '");
+            output.append(batchTransfer.getTrackingId()).append("', '");
+            output.append(batchTransfer.getLastModDateTime()).append("', '");
+            output.append(batchTransfer.getBatchControlNumber()).append("', '");
+            output.append(batchTransfer.getCommitUsername()).append("', '");
+            output.append(batchTransfer.getBatchReceiveDate()).append("', '");
+            output.append(batchTransfer.getLegacyDocumentType()).append("', '");
+            output.append(batchTransfer.getDocumentTypeIdentifier()).append("', '");
+            output.append(batchTransfer.getTotalScannedCount()).append("', '");
+            output.append(batchTransfer.getIsOriginal()).append("', '");
+            output.append(batchTransfer.getLocationId()).append("')");
+        }
+        return output.toString();
+    }
+
+    private static String prepareScannedDocumentTransferCmd(ScannedDocumentTransfer documentTransfer) {
+        StringBuilder output = new StringBuilder();
+        if (documentTransfer != null && documentTransfer.getBatchNumber() != null) {
+            output.append("INSERT INTO [dbo].[SCANNED_DOCUMENT_TRANSFER] (BATCH_NUMBER, MANUFACTURER_ID, " +
+                    "RAW_OWNER_DATA, ODOMETER_READING_DATA, LIENHOLDER_NAME, MAKE, YEAR, " +
+                    "CREATED_DATE_TIME, IMAGE_UNC_FULL_PATH, DOCUMENT_IDENTIFIER, VERIFIER_USERNAME, " +
+                    "FORM_ID, BATCH_DIRECTORY, TOTAL_SCANNED_COUNT, BATCH_RECEIVE_DATE, " +
+                    "SCANNING_MACHINE_NAME, TRACKING_ID, BATCH_SEQUENCE, TITLE_NUMBER, " +
+                    "ISSUANCE_DATE_DATA, DOCUMENT_ID ) values ('");
+            output.append(documentTransfer.getBatchNumber()).append("', '");
+            output.append(documentTransfer.getManufacturerId()).append("', '");
+            output.append(documentTransfer.getRawOwnerData()).append("', '");
+            output.append(documentTransfer.getOdometerReadingData()).append("', '");
+            output.append(documentTransfer.getLienholderName()).append("', '");
+            output.append(documentTransfer.getMake()).append("', '");
+            output.append(documentTransfer.getYear()).append("', '");
+            output.append(documentTransfer.getCreatedDateTime()).append("', '");
+            output.append(documentTransfer.getImageUncFullPath()).append("', '");
+            output.append(documentTransfer.getDocumentIdentifier()).append("', '");
+            output.append(documentTransfer.getVerifierUsername()).append("', '");
+            output.append(documentTransfer.getFormId()).append("', '");
+            output.append(documentTransfer.getBatchDirectory()).append("', '");
+            output.append(documentTransfer.getTotalScannedCount()).append("', '");
+            output.append(documentTransfer.getBatchReceiveDate()).append("', '");
+            output.append(documentTransfer.getScanningMachineName()).append("', '");
+            output.append(documentTransfer.getTrackingId()).append("', '");
+            output.append(documentTransfer.getBatchSequence()).append("', '");
+            output.append(documentTransfer.getTitleNumber()).append("', '");
+            output.append(documentTransfer.getIssuanceDateData()).append("', '");
+            output.append(documentTransfer.getDocumentId()).append("')");
+        }
+        return output.toString();
+    }
+
+}

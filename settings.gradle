@@ -1,0 +1,5 @@
+rootProject.name = 'Tester'
+include 'src'
+include 'model'
+include 'service'
+
