@@ -30,7 +30,9 @@ public class DataGenerator {
 
     private static String[] MAKE = {"HOND", "ACUR", "NISS", "MITS", "SUZI", "AUDI", "FORD", "JEEP"};
 
-    public static Map<BatchTransfer, ScannedDocumentTransfer> getData(int count) {
+    public static Map<BatchTransfer, ScannedDocumentTransfer> getData(int count, String state,
+                                                                      String docTypeId,
+                                                                      String client) {
 
         SecureRandom random = new SecureRandom();
         Map<BatchTransfer, ScannedDocumentTransfer> output = new LinkedHashMap<>();
@@ -51,8 +53,10 @@ public class DataGenerator {
 
             BatchTransfer batchTransfer = new BatchTransfer();
             batchTransfer.setBatchNumber(batchNumber);
-            batchTransfer.setClientShortName(CLIENTS[random.nextInt(CLIENTS.length)]);
-            batchTransfer.setState(STATES[random.nextInt(STATES.length)]);
+//            batchTransfer.setClientShortName(CLIENTS[random.nextInt(CLIENTS.length)]);
+            batchTransfer.setClientShortName(client);
+            batchTransfer.setState(state);
+//            batchTransfer.setState(STATES[random.nextInt(STATES.length)]);
             batchTransfer.setLegacyStatus("I");
             LocalDateTime dateTime = LocalDateTime.now()
                     .withYear(vinDecoded.getYear());
@@ -67,7 +71,8 @@ public class DataGenerator {
             batchTransfer.setCommitUsername("Reader Auto-Commit");
             batchTransfer.setBatchReceiveDate(dateTimeStr);
             batchTransfer.setLegacyDocumentType("T");
-            batchTransfer.setDocumentTypeIdentifier("1");
+//            batchTransfer.setDocumentTypeIdentifier("1");
+            batchTransfer.setDocumentTypeIdentifier(docTypeId);
             batchTransfer.setTotalScannedCount("1");
             batchTransfer.setIsOriginal("1");
             batchTransfer.setLocationId("1");

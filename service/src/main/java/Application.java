@@ -69,7 +69,8 @@ public class Application {
         if (count > 0 && count < 100 && sqlStatement != null) {
             System.out.println("************************************");
             System.out.println(" Batch Number  | Manufacturer Id");
-            Map<BatchTransfer, ScannedDocumentTransfer> values = DataGenerator.getData(count);
+            Map<BatchTransfer, ScannedDocumentTransfer> values = DataGenerator.getData(count, "WA",
+                    "1", "HONDA");
             sqlStatement.execute("BEGIN TRANSACTION;");
             for (BatchTransfer batchTransfer: values.keySet()) {
                 ScannedDocumentTransfer documentTransfer = values.get(batchTransfer);
