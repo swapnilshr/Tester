@@ -33,7 +33,7 @@ public class VinGeneratorUtils {
         vinBuilder.append(vinYear.getYear());
 
         for (int i = 0; i < 7; i++) {
-            vinBuilder.append(getRandomVinChar());
+            vinBuilder.append(getRandomVinNumChar());
         }
 
         final String vin = vinBuilder.toString();
@@ -54,6 +54,11 @@ public class VinGeneratorUtils {
     private static char getRandomVinChar() {
         // '33' is length of ALLOWED_CHARS
         return ALLOWED_CHARS.charAt(RANDOM.nextInt(33));
+    }
+
+    private static char getRandomVinNumChar() {
+        // '33' is length of ALLOWED_CHARS
+        return ALLOWED_CHARS.charAt(RANDOM.nextInt(11));
     }
 
     private static Vin getRandomVinStart() {

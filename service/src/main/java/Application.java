@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public class Application {
@@ -13,7 +14,8 @@ public class Application {
     private static final String jdbcDriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
 
     //The JDBC connection URL which allows for Windows authentication is defined below.
-    private static final String jdbcURL = "jdbc:sqlserver://sacsqldev14.cm.fdielt.com:1433;databaseName=SquashQA;integratedSecurity=true";
+   private static final String jdbcURL = "jdbc:sqlserver://sacsqldev14.cm.fdielt.com:1433;databaseName=SquashQA;integratedSecurity=true";
+   //private static final String jdbcURL = "jdbc:sqlserver://sacsqldev13.cm.fdielt.com:1433;databaseName=CMSPerformance3;integratedSecurity=true";
 
     public static void main(String[] args) throws SQLException {
         System.out.println("Program started");
@@ -47,7 +49,7 @@ public class Application {
             //declare the statement object
             Statement sqlStatement = databaseConnection.createStatement();
 
-            execCommand(1, sqlStatement);
+            execCommand(5, sqlStatement);
 
             System.out.println("Closing database connection");
 
@@ -68,20 +70,29 @@ public class Application {
             System.out.println("************************************");
             System.out.println(" Batch Number  | Manufacturer Id");
             Map<BatchTransfer, ScannedDocumentTransfer> values = DataGenerator.getData(count);
+            sqlStatement.execute("BEGIN TRANSACTION;");
             for (BatchTransfer batchTransfer: values.keySet()) {
                 ScannedDocumentTransfer documentTransfer = values.get(batchTransfer);
                 //execute the command using the execute method
                 sqlStatement.execute(prepareBatchTransferCmd(batchTransfer));
                 sqlStatement.execute(prepareScannedDocumentTransferCmd(documentTransfer));
-                System.out.println(" " + batchTransfer.getBatchNumber() + "  | " + documentTransfer.getManufacturerId());
+                System.out.println(" " + batchTransfer.getBatchNumber() + "  | " + documentTransfer.getManufacturerId() + "  | " + batchTransfer.getState() +
+                        "  | " + batchTransfer.getDocumentTypeIdentifier() + "  | " + batchTransfer.getClientShortName());
             }
+            sqlStatement.execute("COMMIT TRANSACTION;");
+            sqlStatement.execute("BEGIN TRANSACTION;");
+
+            sqlStatement.execute("update SCHEDULE SET NEXT_SCHEDULED = '" +
+                            LocalDateTime.now().plusSeconds(5).toString() +
+                            "',IS_ENABLED=1 where SCHEDULE_ID = 1080");
+            sqlStatement.execute("COMMIT TRANSACTION;");
             System.out.println("************************************");
         }
     }
     private static String prepareBatchTransferCmd(BatchTransfer batchTransfer) {
         StringBuilder output = new StringBuilder();
         if (batchTransfer != null && batchTransfer.getBatchNumber() != null) {
-            output.append("INSERT INTO [dbo].[BATCH_TRANSFER] (BATCH_NUMBER, CLIENT_SHORT_NAME," +
+            output.append("INSERT INTO BATCH_TRANSFER (BATCH_NUMBER, CLIENT_SHORT_NAME," +
                     "STATE, LEGACY_STATUS, CREATED_DATE_TIME, TRACKING_ID," +
                     "LAST_MOD_DATE_TIME, BATCH_CONTROL_NUMBER, COMMIT_USERNAME, BATCH_RECEIVE_DATE," +
                     "LEGACY_DOCUMENT_TYPE, DOCUMENT_TYPE_IDENTIFIER, TOTAL_SCANNED_COUNT," +
@@ -90,6 +101,8 @@ public class Application {
             output.append(batchTransfer.getClientShortName()).append("', '");
             output.append(batchTransfer.getState()).append("', '");
             output.append(batchTransfer.getLegacyStatus()).append("', '");
+//            output.append("2010-03-23T11:30:19','03 TRIAD ','2010-03-23T11:30:19','1815079','Reader Auto-Commit'," +
+//                    "'2010-03-23T00:00:00','T','1','1','1','1')");
             output.append(batchTransfer.getCreatedDateTime()).append("', '");
             output.append(batchTransfer.getTrackingId()).append("', '");
             output.append(batchTransfer.getLastModDateTime()).append("', '");
@@ -108,7 +121,7 @@ public class Application {
     private static String prepareScannedDocumentTransferCmd(ScannedDocumentTransfer documentTransfer) {
         StringBuilder output = new StringBuilder();
         if (documentTransfer != null && documentTransfer.getBatchNumber() != null) {
-            output.append("INSERT INTO [dbo].[SCANNED_DOCUMENT_TRANSFER] (BATCH_NUMBER, MANUFACTURER_ID, " +
+            output.append("INSERT INTO SCANNED_DOCUMENT_TRANSFER (BATCH_NUMBER, MANUFACTURER_ID, " +
                     "RAW_OWNER_DATA, ODOMETER_READING_DATA, LIENHOLDER_NAME, MAKE, YEAR, " +
                     "CREATED_DATE_TIME, IMAGE_UNC_FULL_PATH, DOCUMENT_IDENTIFIER, VERIFIER_USERNAME, " +
                     "FORM_ID, BATCH_DIRECTORY, TOTAL_SCANNED_COUNT, BATCH_RECEIVE_DATE, " +
@@ -119,6 +132,9 @@ public class Application {
             output.append(documentTransfer.getRawOwnerData()).append("', '");
             output.append(documentTransfer.getOdometerReadingData()).append("', '");
             output.append(documentTransfer.getLienholderName()).append("', '");
+//            output.append("','DBPO12LNID','AUDI','','08/23/2006 11:28:24 AM','\\\\dorado\\Images\\Image0013.tif'," +
+//                    "'00200118 - 1','khousto','14327299','u:\\tf\\bat\\00200118','3','08/23/2006','khousto'," +
+//                    "'03 TRIAD','0','','07/29/06',NEWID())");
             output.append(documentTransfer.getMake()).append("', '");
             output.append(documentTransfer.getYear()).append("', '");
             output.append(documentTransfer.getCreatedDateTime()).append("', '");
@@ -133,8 +149,8 @@ public class Application {
             output.append(documentTransfer.getTrackingId()).append("', '");
             output.append(documentTransfer.getBatchSequence()).append("', '");
             output.append(documentTransfer.getTitleNumber()).append("', '");
-            output.append(documentTransfer.getIssuanceDateData()).append("', '");
-            output.append(documentTransfer.getDocumentId()).append("')");
+            output.append(documentTransfer.getIssuanceDateData()).append("', ");
+            output.append("NEWID()").append(")");
         }
         return output.toString();
     }

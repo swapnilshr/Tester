@@ -3,6 +3,12 @@ import model.ScannedDocumentTransfer;
 import vin.decoder.VIN;
 import vin.encoder.VinGeneratorUtils;
 
+import javax.net.ssl.HttpsURLConnection;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -11,12 +17,13 @@ import java.util.Map;
 import java.util.UUID;
 
 public class DataGenerator {
-    private static String[] STATES = { "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA",
-                              "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA",
-                              "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY",
-                              "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX",
-                              "UT", "VT", "VA", "WA", "WV", "WI", "WY" };
-    private static String[] CLIENTS = {"HONDA", "PNC", "RETAILHAFC", "PINELLAS"};
+//    private static String[] STATES = { "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA",
+//                              "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA",
+//                              "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY",
+//                              "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX",
+//                              "UT", "VT", "VA", "WA", "WV", "WI", "WY" };
+    private static String[] STATES = { "KS", "WV", "WA", "TX", "CA" };
+    private static String[] CLIENTS = {"HONDA", "PNC"};
 //    private static String[] LIEN = {"DRIVE FINANCIAL SERVICES", "HSBC AUTO FINANCE INC", "NAVY FEDERAL CREDIT UNION",
 //                                    "KINETIC FEDERAL CREDIT UNION", "AMERICAN HONDA FINANCE CORP"};
     private static String[] LIEN = {"DAIMLER", "CAPONE", "HONDA", "BKWEST", "CHASE"};
@@ -30,7 +37,16 @@ public class DataGenerator {
 
         for(int i=0; i<count; i++) {
             String batchNumber = generateBatchNumber();
-            String vin = VinGeneratorUtils.getRandomVin();
+            String vin;
+
+            try {
+                vin = getRandomVin();
+            }
+            catch (IOException ex ) {
+                System.out.println("***UNABLE TO FETCH VIN***");
+                vin = VinGeneratorUtils.getRandomVin();
+            }
+
             VIN vinDecoded = new VIN(vin);
 
             BatchTransfer batchTransfer = new BatchTransfer();
@@ -65,9 +81,10 @@ public class DataGenerator {
             documentTransfer.setMake(MAKE[random.nextInt(MAKE.length)]);
             documentTransfer.setYear(Integer.valueOf(vinDecoded.getYear()).toString());
             documentTransfer.setCreatedDateTime(dateTime.format(formatter));
-            documentTransfer.setImageUncFullPath("z:\\teleformimages\\0" + batchTransfer.getBatchNumber() +
-                    "\\" + randomString(6, true) + "0000.tif");
-            documentTransfer.setDocumentIdentifier("0" + batchTransfer.getBatchNumber() + " - " + 1);
+//            documentTransfer.setImageUncFullPath("z:\\teleformimages\\0" + batchTransfer.getBatchNumber() +
+//                    "\\" + randomString(6, true) + "0000.tif");
+            documentTransfer.setImageUncFullPath("\\\\dorado\\Images\\Image0013.tif");
+            documentTransfer.setDocumentIdentifier("00200118 - 1");
             documentTransfer.setVerifierUsername("khousto");
             documentTransfer.setFormId("14327299");
             documentTransfer.setBatchDirectory("u:\\tf\\bat\\00200118");
@@ -86,7 +103,7 @@ public class DataGenerator {
 
     private static String generateBatchNumber() {
         long leftLimit = Long.parseLong("100000000000");
-        long rightLimit = Long.parseLong("1000000000000");
+        long rightLimit = Long.parseLong("110000000000");
         Long generatedLong = leftLimit + (long) (Math.random() * (rightLimit - leftLimit));
         return generatedLong.toString();
     }
@@ -113,6 +130,22 @@ public class DataGenerator {
         return output.toString();
     }
 
+    private static String getRandomVin() throws IOException {
+        final String url = "https://randomvin.com/getvin.php?type=fake";
+        final URL httpsUrl = new URL(url);
+        HttpsURLConnection connection = (HttpsURLConnection) httpsUrl.openConnection();
+        InputStream is = connection.getInputStream();
+        InputStreamReader isr = new InputStreamReader(is);
+
+        BufferedReader br = new BufferedReader(isr);
+        StringBuilder output = new StringBuilder();
+        String input;
+        while ((input = br.readLine()) != null) {
+            output.append(input);
+        }
+        br.close();
+        return output.toString().trim();
+    }
 
 
 }
